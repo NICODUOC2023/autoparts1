@@ -1,0 +1,94 @@
+{% load static %}
+<!-- Top navigation with search and user tools -->
+<div class="container d-flex justify-content-center align-items-center py-3">
+  <div class="row w-100 align-items-center">
+    <div class="col-4">
+      <div class="input-group">
+        <input type="search" class="form-control border-end-0" placeholder="¿Qué estás buscando?" aria-label="Search">
+        <span class="input-group-text bg-white border-start-0">
+          <i class="bi bi-search"></i>
+        </span>
+      </div>
+    </div>
+    <div class="col-4 text-center">
+      <a class="navbar-brand" href="{% url 'home' %}">
+          <img src="{% static 'images/logo.png' %}" alt="Logo" height="30">
+      </a>
+    </div>
+    <div class="col-4">
+      <div class="d-flex justify-content-end align-items-center">
+        <a href="{% url 'login' %}" class="text-dark text-decoration-none me-4">
+          <i class="bi bi-person-fill"></i>
+          <span class="ms-1">Iniciar Sesión</span>
+        </a>
+        
+        <a href="#" class="text-dark text-decoration-none position-relative">
+          <i class="bi bi-cart3"></i>
+          <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+            {{ cart_total|default:0 }}
+          </span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Categories navigation -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white border-top border-bottom">
+  <div class="container">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCategories" aria-controls="navbarCategories" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse justify-content-center" id="navbarCategories">
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link px-3" href="{% url 'product_list' %}">Catálogo</a>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="{% url 'category_products' 'motores-y-componentes' %}" role="button" data-bs-toggle="dropdown">
+            Motores y Componentes
+          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="{% url 'category_products' 'filtros-de-aceite' %}">Filtros de Aceite</a></li>
+            <li><a class="dropdown-item" href="{% url 'category_products' 'filtros-de-aire' %}">Filtros de Aire</a></li>
+            <li><a class="dropdown-item" href="{% url 'category_products' 'bujias' %}">Bujías</a></li>
+            <li><a class="dropdown-item" href="{% url 'category_products' 'correas-de-distribucion' %}">Correas de Distribución</a></li>
+          </ul>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="{% url 'category_products' 'frenos-y-suspension' %}" role="button" data-bs-toggle="dropdown">
+            Frenos y Suspensión
+          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="{% url 'category_products' 'pastillas-de-freno' %}">Pastillas de Freno</a></li>
+            <li><a class="dropdown-item" href="{% url 'category_products' 'discos-de-freno' %}">Discos de Freno</a></li>
+            <li><a class="dropdown-item" href="{% url 'category_products' 'amortiguadores' %}">Amortiguadores</a></li>
+            <li><a class="dropdown-item" href="{% url 'category_products' 'rotulas' %}">Rótulas</a></li>
+          </ul>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="{% url 'category_products' 'electricidad-y-baterias' %}" role="button" data-bs-toggle="dropdown">
+            Electricidad y Baterías
+          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="{% url 'category_products' 'alternadores' %}">Alternadores</a></li>
+            <li><a class="dropdown-item" href="{% url 'category_products' 'baterias' %}">Baterías</a></li>
+            <li><a class="dropdown-item" href="{% url 'category_products' 'luces-y-faros' %}">Luces y Faros</a></li>
+            <li><a class="dropdown-item" href="{% url 'category_products' 'sensores-y-fusibles' %}">Sensores y Fusibles</a></li>
+          </ul>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="{% url 'category_products' 'accesorios-y-seguridad' %}" role="button" data-bs-toggle="dropdown">
+            Accesorios y Seguridad
+          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="{% url 'category_products' 'alarmas' %}">Alarmas</a></li>
+            <li><a class="dropdown-item" href="{% url 'category_products' 'cinturones-de-seguridad' %}">Cinturones de Seguridad</a></li>
+            <li><a class="dropdown-item" href="{% url 'category_products' 'cubre-asientos' %}">Cubre Asientos</a></li>
+            <li><a class="dropdown-item" href="{% url 'category_products' 'kits-de-emergencia' %}">Kits de Emergencia</a></li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>

@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}" class="text-dark text-decoration-none">Inicio</a></li>
+            {% if category.parent %}
+            <li class="breadcrumb-item"><a href="{% url 'category_products' category.parent.slug %}" class="text-dark text-decoration-none">{{ category.parent.name }}</a></li>
+            {% endif %}
+            <li class="breadcrumb-item active text-red" aria-current="page">{{ category.name }}</li>
+        </ol>
+    </nav>
+
+    <h1 class="mb-4">{{ category.name }}</h1>
+    
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for product in products %}
+        <div class="col">
+            <div class="card h-100">
+                {% if product.image %}
+                <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ product.name }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{{ product.brand }}</h6>
+                    <p class="card-text">
+                        <strong>Código:</strong> {{ product.product_code }}<br>
+                        <strong>Referencia:</strong> {{ product.code }}
+                    </p>
+                    {% with latest_price=product.prices.last %}
+                    {% if latest_price %}
+                    <div class="mb-3">
+                        <h4 class="text-primary mb-1">${{ latest_price.value }}</h4>
+                        <small class="text-muted">Actualizado: {{ latest_price.date|date:"d/m/Y" }}</small>
+                    </div>
+                    <form method="post" action="{% url 'add_to_cart' product.id %}" class="add-to-cart-form">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            <input type="number" name="quantity" value="1" min="1" class="form-control" required>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-cart-plus"></i> Agregar al carrito
+                            </button>
+                        </div>
+                    </form>
+                    {% else %}
+                    <p class="card-text text-muted">Precio no disponible</p>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                No hay productos disponibles en esta categoría.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const forms = document.querySelectorAll('.add-to-cart-form');
+    forms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Update cart count in navbar
+                const cartCount = document.getElementById('cart-count');
+                if (cartCount) {
+                    cartCount.textContent = data.cart_total;
+                }
+                // Show success message
+                alert('¡Producto agregado al carrito exitosamente!');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al agregar el producto al carrito');
+            });
+        });
+    });
+});
+</script>
+{% endblock %}
+{% endblock %} 
