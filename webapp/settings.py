@@ -66,6 +66,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'core.context_processors.cart_processor',
+                'core.context_processors.cart_items_count',
             ],
         },
     },
@@ -132,3 +133,9 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# settings.py
+
+
+TRANSBANK_COMMERCE_CODE   = '597055555532'
+TRANSBANK_API_KEY         = '579B532A7440BB0C9079DED94D31EA1615BACEB566...'
+TRANSBANK_INTEGRATION_TYPE = 'TEST'  # o 'PRODUCTION'

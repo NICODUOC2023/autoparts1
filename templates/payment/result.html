@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body text-center p-5">
+                    {% if status == 'AUTHORIZED' %}
+                        <div class="mb-4">
+                            <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                        </div>
+                        <h2 class="mb-4">¡Pago Exitoso!</h2>
+                        <p class="text-muted mb-4">Tu transacción ha sido procesada correctamente.</p>
+                    {% else %}
+                        <div class="mb-4">
+                            <i class="bi bi-x-circle-fill text-danger" style="font-size: 4rem;"></i>
+                        </div>
+                        <h2 class="mb-4">Pago No Completado</h2>
+                        <p class="text-muted mb-4">Hubo un problema al procesar tu pago.</p>
+                    {% endif %}
+
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">Detalles de la Transacción</h5>
+                            <div class="row text-start">
+                                <div class="col-6">
+                                    <p class="mb-2"><strong>Orden de Compra:</strong></p>
+                                    <p class="mb-2"><strong>Monto:</strong></p>
+                                    <p class="mb-2"><strong>Últimos 4 dígitos:</strong></p>
+                                    <p class="mb-0"><strong>Estado:</strong></p>
+                                </div>
+                                <div class="col-6">
+                                    <p class="mb-2">{{ buy_order }}</p>
+                                    <p class="mb-2">${{ amount|floatformat:0 }}</p>
+                                    <p class="mb-2">{{ card_last4 }}</p>
+                                    <p class="mb-0">
+                                        {% if status == 'AUTHORIZED' %}
+                                            <span class="badge bg-success">Autorizado</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Rechazado</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        {% if status == 'AUTHORIZED' %}
+                            <a href="{% url 'download_receipt' buy_order=buy_order %}" class="btn btn-success mb-2">
+                                <i class="bi bi-download me-2"></i>Descargar Comprobante
+                            </a>
+                        {% endif %}
+                        <a href="{% url 'home' %}" class="btn btn-primary">Volver al Inicio</a>
+                        {% if status == 'AUTHORIZED' %}
+                            <a href="{% url 'product_list' %}" class="btn btn-outline-primary">Continuar Comprando</a>
+                        {% else %}
+                            <a href="{% url 'cart' %}" class="btn btn-outline-primary">Volver al Carrito</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

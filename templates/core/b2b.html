@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>Panel de Control B2B</h1>
+                <a href="{% url 'b2b_logout' %}" class="btn btn-danger">Cerrar Sesión</a>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Bienvenido, {{ request.session.b2b_user }}</h5>
+                    <p class="card-text">Este es tu panel de control para empresas.</p>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h5 class="card-title">Pedidos</h5>
+                                    <p class="card-text">Gestiona tus pedidos actuales</p>
+                                    <a href="#" class="btn btn-primary">Ver Pedidos</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h5 class="card-title">Catálogo</h5>
+                                    <p class="card-text">Explora nuestro catálogo completo</p>
+                                    <a href="#" class="btn btn-primary">Ver Catálogo</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h5 class="card-title">Perfil</h5>
+                                    <p class="card-text">Actualiza tu información</p>
+                                    <a href="#" class="btn btn-primary">Editar Perfil</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

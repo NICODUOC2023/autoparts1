@@ -3,12 +3,12 @@
 <div class="container d-flex justify-content-center align-items-center py-3">
   <div class="row w-100 align-items-center">
     <div class="col-4">
-      <div class="input-group">
-        <input type="search" class="form-control border-end-0" placeholder="¿Qué estás buscando?" aria-label="Search">
-        <span class="input-group-text bg-white border-start-0">
+      <form action="{% url 'search_products' %}" method="GET" class="input-group">
+        <input type="search" name="q" class="form-control border-end-0" placeholder="¿Qué estás buscando?" aria-label="Search" value="{{ request.GET.q|default:'' }}">
+        <button type="submit" class="input-group-text bg-white border-start-0">
           <i class="bi bi-search"></i>
-        </span>
-      </div>
+        </button>
+      </form>
     </div>
     <div class="col-4 text-center">
       <a class="navbar-brand" href="{% url 'home' %}">
@@ -17,15 +17,22 @@
     </div>
     <div class="col-4">
       <div class="d-flex justify-content-end align-items-center">
-        <a href="{% url 'login' %}" class="text-dark text-decoration-none me-4">
-          <i class="bi bi-person-fill"></i>
-          <span class="ms-1">Iniciar Sesión</span>
-        </a>
+        {% if is_b2b_view %}
+          <a href="{% url 'b2b_logout' %}" class="btn btn-danger text-decoration-none">
+            <i class="bi bi-box-arrow-right"></i>
+            <span class="ms-1">Cerrar Sesión</span>
+          </a>
+        {% else %}
+          <a href="#" class="btn btn-warning text-dark text-decoration-none me-4" data-bs-toggle="modal" data-bs-target="#loginModal">
+            <i class="bi bi-person-fill"></i>
+            <span class="ms-1">Acceso Empresas</span>
+          </a>
+        {% endif %}
         
-        <a href="#" class="text-dark text-decoration-none position-relative">
+        <a href="{% url 'cart' %}" class="text-dark text-decoration-none position-relative">
           <i class="bi bi-cart3"></i>
           <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-            {{ cart_total|default:0 }}
+            {{ cart_items_count|default:0 }}
           </span>
         </a>
       </div>
