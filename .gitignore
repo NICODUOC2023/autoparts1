@@ -23,8 +23,8 @@ var/
 *.log
 *.pot
 *.pyc
-db.sqlite3
-media/
+# db.sqlite3  # Comentado para incluir la base de datos
+# media/      # Comentado para incluir las imágenes
 static/
 venv/
 .env
