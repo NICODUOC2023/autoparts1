@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+{% load custom_filters %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}" class="text-decoration-none">Inicio</a></li>
+            {% if product.category %}
+            <li class="breadcrumb-item"><a href="{% url 'category_products' product.category.slug %}" class="text-decoration-none">{{ product.category.name }}</a></li>
+            {% endif %}
+            <li class="breadcrumb-item active" aria-current="page">{{ product.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Product Image -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                {% if product.image %}
+                <img src="{{ product.image.url }}" class="card-img-top img-fluid" alt="{{ product.name }}" style="object-fit: contain; height: 400px;">
+                {% else %}
+                <div class="bg-light d-flex align-items-center justify-content-center" style="height: 400px;">
+                    <i class="bi bi-image text-muted" style="font-size: 5rem;"></i>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Product Info -->
+        <div class="col-md-6">
+            <h1 class="h2 mb-3">{{ product.name }}</h1>
+            <div class="mb-3">
+                <span class="badge bg-primary">{{ product.brand }}</span>
+                <span class="text-muted ms-2">SKU: {{ product.code }}</span>
+            </div>
+
+            {% if latest_price %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted">Precio Neto:</span>
+                        <span>${{ latest_price.value|clp }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted">IVA:</span>
+                        <span>${{ latest_price.iva|clp }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="mb-0">Total:</h3>
+                        <h3 class="text-primary mb-0">${{ latest_price.total|clp }}</h3>
+                    </div>
+                </div>
+            </div>
+
+            <form method="post" action="{% url 'add_to_cart' product.id %}" class="add-to-cart-form mb-4">
+                {% csrf_token %}
+                <div class="row g-2">
+                    <div class="col-4">
+                        <input type="number" name="quantity" value="1" min="1" class="form-control" required>
+                    </div>
+                    <div class="col-8">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-cart-plus me-2"></i>Agregar al carrito
+                        </button>
+                    </div>
+                </div>
+            </form>
+            {% else %}
+            <div class="alert alert-warning">
+                Producto temporalmente sin stock
+            </div>
+            {% endif %}
+
+            <!-- Stock Status -->
+            <div class="d-flex align-items-center mb-4">
+                <i class="bi {% if product.stock > 0 %}bi-check-circle-fill text-success{% else %}bi-x-circle-fill text-danger{% endif %} me-2"></i>
+                <span>{{ product.stock }} unidades disponibles</span>
+            </div>
+
+            <!-- Product Description -->
+            {% if product.description %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <h4 class="h5 mb-3">Descripción</h4>
+                    <div class="description-content" style="white-space: pre-line;">{{ product.description }}</div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Related Products -->
+    {% if related_products %}
+    <div class="mt-5">
+        <h3 class="h4 mb-4">Productos relacionados</h3>
+        <div class="row row-cols-1 row-cols-md-4 g-4">
+            {% for related in related_products %}
+            <div class="col">
+                <div class="card h-100 border-0 shadow-sm">
+                    {% if related.image %}
+                    <img src="{{ related.image.url }}" class="card-img-top" alt="{{ related.name }}" style="height: 200px; object-fit: contain;">
+                    {% else %}
+                    <div class="bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                        <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
+                    </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title h6">{{ related.name }}</h5>
+                        <p class="card-text">
+                            <small class="text-muted">{{ related.brand }}</small>
+                        </p>
+                        {% with price=related.get_latest_price %}
+                        {% if price %}
+                        <p class="card-text fw-bold mb-0">${{ price.total|clp }}</p>
+                        {% endif %}
+                        {% endwith %}
+                        <a href="{% url 'product_detail' related.id %}" class="btn btn-outline-primary btn-sm mt-2">Ver detalles</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('.add-to-cart-form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Update cart count in navbar
+                const cartCount = document.getElementById('cart-count');
+                if (cartCount) {
+                    cartCount.textContent = data.cart_total;
+                }
+                // Show success toast
+                const toast = new bootstrap.Toast(document.getElementById('cartToast'));
+                toast.show();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al agregar el producto al carrito');
+            });
+        });
+    }
+});
+</script>
+{% endblock %}
+
+<!-- Toast Notification -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="cartToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-success text-white">
+            <i class="bi bi-check-circle me-2"></i>
+            <strong class="me-auto">¡Éxito!</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+            Producto agregado al carrito correctamente.
+        </div>
+    </div>
+</div>
+{% endblock %}

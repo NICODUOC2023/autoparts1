@@ -1,77 +1,158 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
+{% load custom_filters %}
+
+{% block title %}Carrito de Compras{% endblock %}
 
 {% block content %}
 <div class="container py-5">
     <h1 class="mb-4">Carrito de Compras</h1>
     
+    {% if cart_items %}
     <div class="row">
-        <!-- Lista de Productos -->
+        <!-- Cart Items -->
         <div class="col-md-8">
-            {% if cart_items %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
                 {% for item in cart_items %}
-                <div class="card mb-3">
-                    <div class="row g-0">
-                        <div class="col-md-3">
-                            <img src="{{ item.product.image.url }}" class="img-fluid rounded-start" alt="{{ item.product.name }}">
+                    <div class="row mb-4 align-items-center">
+                        <div class="col-3 col-md-2">
+                            {% if item.product.image %}
+                            <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="img-fluid">
+                            {% else %}
+                            <div class="bg-light d-flex align-items-center justify-content-center" style="height: 80px;">
+                                <i class="bi bi-image text-muted" style="font-size: 2rem;"></i>
+                            </div>
+                            {% endif %}
                         </div>
-                        <div class="col-md-9">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <h5 class="card-title">{{ item.product.name }}</h5>
-                                    <button class="btn btn-outline-danger btn-sm remove-item" data-product-id="{{ item.product.id }}">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </div>
-                                <p class="card-text text-muted">{{ item.product.description|truncatewords:20 }}</p>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div class="input-group" style="width: 150px;">
-                                        <button class="btn btn-outline-secondary btn-sm decrease-quantity" data-product-id="{{ item.product.id }}">-</button>
-                                        <input type="number" class="form-control form-control-sm text-center quantity-input" 
-                                               value="{{ item.quantity }}" min="1" data-product-id="{{ item.product.id }}">
-                                        <button class="btn btn-outline-secondary btn-sm increase-quantity" data-product-id="{{ item.product.id }}">+</button>
-                                    </div>
-                                    <div class="text-end">
-                                        <small class="text-muted">Precio unitario: ${{ item.product.prices.first.value }}</small>
-                                        <h5 class="mb-0">${{ item.total_price }}</h5>
-                                    </div>
-                                </div>
+                        <div class="col-9 col-md-4">
+                            <h5 class="h6 mb-1">{{ item.product.name }}</h5>
+                            <p class="text-muted small mb-0">{{ item.product.brand }}</p>
+                            <p class="text-muted small mb-0">SKU: {{ item.product.code }}</p>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="input-group input-group-sm">
+                                <input type="number" class="form-control quantity-input" value="{{ item.quantity }}" min="1" data-product-id="{{ item.product.id }}">
+                                <button type="button" class="btn btn-outline-danger" onclick="removeFromCart({{ item.product.id }})">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             </div>
                         </div>
+                        <div class="col-6 col-md-3 text-end">
+                            <p class="mb-0 fw-bold">${{ item.subtotal|clp }}</p>
+                        </div>
                     </div>
-                </div>
+                    {% if not forloop.last %}<hr>{% endif %}
                 {% endfor %}
-            {% else %}
-                <div class="alert alert-info">
-                    Tu carrito está vacío. <a href="{% url 'product_list' %}" class="alert-link">¡Comienza a comprar!</a>
                 </div>
-            {% endif %}
+            </div>
         </div>
 
-        <!-- Formulario de Pago -->
+        <!-- Order Summary -->
         <div class="col-md-4">
-            <div class="card">
+            <div class="card border-0 shadow-sm mb-4">
                 <div class="card-body">
-                    <h5 class="card-title mb-4">Información de Pago</h5>
-                    
-                    <form action="{% url 'start_payment' %}" method="post">
-                        {% csrf_token %}
-                        
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                          <h5>Total:</h5>
-                          <h4 class="mb-0">${{ cart_total }}</h4>
-                        </div>
-                        
-                        {# Ocultamos el monto real para enviarlo al servidor #}
-                        <input type="hidden" name="amount" value="{{ cart_total }}">
-                      
-                        <button type="submit"
-                                class="btn btn-success w-100"
-                                {% if not cart_items %}disabled{% endif %}>
-                          <i class="bi bi-credit-card me-2"></i>Pagar Ahora
-                        </button>
-                      </form>
+                    <h5 class="card-title mb-4">Resumen del Pedido</h5>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Subtotal</span>
+                        <span>${{ cart_subtotal|clp }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>IVA</span>
+                        <span>${{ cart_iva|clp }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Envío</span>
+                        <span id="shipping-cost">Seleccione comuna</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-2">
+                        <strong>Total con envío</strong>
+                        <strong class="text-primary" id="total-with-shipping">${{ cart_total|clp }}</strong>
+                    </div>
+                    <div id="shipping-details" class="small text-muted mt-2"></div>
                 </div>
+            </div>
+
+            <!-- Checkout Form -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Datos de Envío</h5>
+                    <form method="post" action="{% url 'process_payment' %}" id="checkoutForm">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="nombre" class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="nombre" name="nombre" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="apellido" class="form-label">Apellido</label>
+                            <input type="text" class="form-control" id="apellido" name="apellido" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="correo" class="form-label">Correo Electrónico</label>
+                            <input type="email" class="form-control" id="correo" name="correo" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="comuna" class="form-label">Comuna</label>
+                            <select class="form-select" id="comuna" name="comuna" required>
+                                <option value="">Seleccionar comuna...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="direccion" class="form-label">Dirección de Envío</label>
+                            <textarea class="form-control" id="direccion" name="direccion" rows="3" required></textarea>
+                        </div>
+                        <input type="hidden" name="shipping_cost" id="shipping_cost_input" value="0">
+                        <button type="submit" class="btn btn-primary w-100">
+                            Proceder al Pago
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-cart-x display-1 text-muted mb-4"></i>
+        <h2 class="h4 mb-4">Tu carrito está vacío</h2>
+        <p class="text-muted">¡Agrega algunos productos para comenzar!</p>
+        <a href="{% url 'product_list' %}" class="btn btn-primary">Ver Productos</a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Notification Modal -->
+<div class="modal fade" id="notificationModal" tabindex="-1" aria-labelledby="notificationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="notificationModalLabel">Notificación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="notificationModalBody">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteConfirmModalLabel">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                ¿Estás seguro de que deseas eliminar este producto del carrito?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">Eliminar</button>
             </div>
         </div>
     </div>
@@ -79,69 +160,151 @@
 
 {% block extra_js %}
 <script>
+function showNotification(message, isError = false) {
+    const modalBody = document.getElementById('notificationModalBody');
+    modalBody.textContent = message;
+    const modal = new bootstrap.Modal(document.getElementById('notificationModal'));
+    modal.show();
+}
+
 document.addEventListener('DOMContentLoaded', function() {
-    // Función para actualizar la cantidad
-    function updateQuantity(productId, newQuantity) {
-        fetch(`/cart/update/${productId}/`, {
+    // Update quantity when input changes
+    const quantityInputs = document.querySelectorAll('.quantity-input');
+    quantityInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            const productId = this.dataset.productId;
+            const quantity = this.value;
+            updateCartItem(productId, quantity);
+        });
+    });
+
+    // Load communes
+    loadComunas();
+
+    // Add event listener for commune selection
+    document.getElementById('comuna').addEventListener('change', calculateShipping);
+});
+
+function loadComunas() {
+    const comunaSelect = document.getElementById('comuna');
+    fetch('{% url "get_comunas" %}')
+        .then(response => response.json())
+        .then(comunas => {
+            comunas.forEach(comuna => {
+                const option = document.createElement('option');
+                option.value = comuna.code;
+                option.textContent = comuna.name;
+                comunaSelect.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error loading communes:', error);
+            comunaSelect.innerHTML = '<option value="">Error al cargar comunas</option>';
+            showNotification('Error al cargar las comunas', true);
+        });
+}
+
+function calculateShipping() {
+    const comunaCode = document.getElementById('comuna').value;
+    if (!comunaCode) return;
+
+    const shippingCostElem = document.getElementById('shipping-cost');
+    const totalWithShippingElem = document.getElementById('total-with-shipping');
+    const shippingDetailsElem = document.getElementById('shipping-details');
+    const shippingCostInput = document.getElementById('shipping_cost_input');
+
+    shippingCostElem.textContent = 'Calculando...';
+
+    fetch('{% url "calculate_shipping" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            destination_code: comunaCode
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            shippingCostElem.textContent = 'Error al calcular';
+            shippingDetailsElem.textContent = data.error;
+            shippingCostInput.value = 0;
+            showNotification(data.error, true);
+        } else {
+            const cartTotal = {{ cart_total }};
+            const shippingCost = Math.round(data.cost);
+            const totalWithShipping = cartTotal + shippingCost;
+
+            shippingCostElem.textContent = `$${formatCLP(shippingCost)}`;
+            totalWithShippingElem.textContent = `$${formatCLP(totalWithShipping)}`;
+            
+            if (data.service_type || data.service_description) {
+                shippingDetailsElem.textContent = `${data.service_type}${data.service_description ? ' - ' + data.service_description : ''}`;
+            }
+
+            shippingCostInput.value = shippingCost;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        shippingCostElem.textContent = 'Error al calcular';
+        shippingDetailsElem.textContent = 'Error de conexión';
+        shippingCostInput.value = 0;
+        showNotification('Error al calcular el envío', true);
+    });
+}
+
+function formatCLP(value) {
+    return new Intl.NumberFormat('es-CL').format(value);
+}
+
+function updateCartItem(productId, quantity) {
+    fetch(`/cart/update/${productId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({ quantity: quantity })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            showNotification('Error al actualizar el carrito', true);
+        }
+    });
+}
+
+function removeFromCart(productId) {
+    const modal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+    const confirmButton = document.getElementById('confirmDelete');
+    
+    confirmButton.onclick = function() {
+        fetch(`/cart/remove/${productId}/`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
                 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            },
-            body: JSON.stringify({
-                quantity: newQuantity
-            })
+            }
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                window.location.reload();
+                location.reload();
+            } else {
+                showNotification('Error al eliminar el producto', true);
             }
         });
-    }
-
-    // Event listeners para los botones de cantidad
-    document.querySelectorAll('.decrease-quantity').forEach(button => {
-        button.addEventListener('click', function() {
-            const productId = this.dataset.productId;
-            const input = document.querySelector(`.quantity-input[data-product-id="${productId}"]`);
-            const currentValue = parseInt(input.value);
-            if (currentValue > 1) {
-                updateQuantity(productId, currentValue - 1);
-            }
-        });
-    });
-
-    document.querySelectorAll('.increase-quantity').forEach(button => {
-        button.addEventListener('click', function() {
-            const productId = this.dataset.productId;
-            const input = document.querySelector(`.quantity-input[data-product-id="${productId}"]`);
-            const currentValue = parseInt(input.value);
-            updateQuantity(productId, currentValue + 1);
-        });
-    });
-
-    // Event listener para eliminar items
-    document.querySelectorAll('.remove-item').forEach(button => {
-        button.addEventListener('click', function() {
-            const productId = this.dataset.productId;
-            if (confirm('¿Estás seguro de que quieres eliminar este producto del carrito?')) {
-                fetch(`/cart/remove/${productId}/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        window.location.reload();
-                    }
-                });
-            }
-        });
-    });
-});
+        modal.hide();
+    };
+    
+    modal.show();
+}
 </script>
 {% endblock %}
 {% endblock %}
+
+```

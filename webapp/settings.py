@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
     'core',
     'rest_framework',
 ]
@@ -139,3 +140,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 TRANSBANK_COMMERCE_CODE   = '597055555532'
 TRANSBANK_API_KEY         = '579B532A7440BB0C9079DED94D31EA1615BACEB566...'
 TRANSBANK_INTEGRATION_TYPE = 'TEST'  # o 'PRODUCTION'
+
+# Chilexpress API settings
+CHILEXPRESS_API_KEY = '06244c53b5864b05877581700ea03398'  # Primary key
+CHILEXPRESS_SECONDARY_KEY = 'cb065107cf0e4dab8651ae8dc47d0883'  # Secondary key
+CHILEXPRESS_ORIGIN_COMUNA = '13123'  # Replace with your warehouse/store comuna code (e.g., Providencia)

@@ -3,21 +3,11 @@
 {% load humanize %}
 {% load custom_filters %}
 
-{% block title %}{{ title }}{% endblock %}
+{% block title %}Catálogo de Productos{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'home' %}" class="text-dark text-decoration-none">Inicio</a></li>
-            {% if category.parent %}
-            <li class="breadcrumb-item"><a href="{% url 'category_products' category.parent.slug %}" class="text-dark text-decoration-none">{{ category.parent.name }}</a></li>
-            {% endif %}
-            <li class="breadcrumb-item active text-red" aria-current="page">{{ category.name }}</li>
-        </ol>
-    </nav>
-
-    <h1 class="mb-4">{{ category.name }}</h1>
+<div class="container py-5">
+    <h1 class="mb-4">Catálogo de Productos</h1>
     
     <div class="row row-cols-1 row-cols-md-4 g-4">
         {% for product in products %}
@@ -39,7 +29,6 @@
                     </h5>
                     <p class="card-subtitle mb-2">
                         <span class="badge bg-primary">{{ product.brand }}</span>
-                        <span class="badge bg-success ms-1">Stock: {{ product.stock }}</span>
                     </p>
                     {% with latest_price=product.get_latest_price %}
                     {% if latest_price %}
@@ -47,7 +36,6 @@
                         <p class="text-muted mb-1"><small>Precio Neto: ${{ latest_price.value|clp }}</small></p>
                         <p class="text-muted mb-1"><small>IVA: ${{ latest_price.iva|clp }}</small></p>
                         <h4 class="text-primary mb-1">${{ latest_price.total|clp }}</h4>
-                        <small class="text-muted">Actualizado: {{ latest_price.date|date:"d/m/Y" }}</small>
                     </div>
                     <form method="post" action="{% url 'add_to_cart' product.id %}" class="add-to-cart-form">
                         {% csrf_token %}
@@ -65,12 +53,6 @@
                 </div>
             </div>
         </div>
-        {% empty %}
-        <div class="col-12">
-            <div class="alert alert-info">
-                No hay productos disponibles en esta categoría.
-            </div>
-        </div>
         {% endfor %}
     </div>
 </div>
@@ -78,7 +60,6 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Add to cart functionality
     const forms = document.querySelectorAll('.add-to-cart-form');
     forms.forEach(form => {
         form.addEventListener('submit', function(e) {
@@ -99,50 +80,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (cartCount) {
                     cartCount.textContent = data.cart_total;
                 }
-                
-                // Show notification modal
-                const notificationModal = new bootstrap.Modal(document.getElementById('notificationModal'));
-                document.getElementById('notificationModalBody').textContent = 'Producto agregado al carrito correctamente';
-                notificationModal.show();
-                
-                // Add event listener for modal hidden event
-                document.getElementById('notificationModal').addEventListener('hidden.bs.modal', function () {
-                    // Remove modal backdrop if it exists
-                    const backdrop = document.querySelector('.modal-backdrop');
-                    if (backdrop) {
-                        backdrop.remove();
-                    }
-                    // Remove modal-open class from body
-                    document.body.classList.remove('modal-open');
-                    // Remove inline styles from body
-                    document.body.style.removeProperty('padding-right');
-                    document.body.style.removeProperty('overflow');
-                }, { once: true });
+                showNotification('Producto agregado al carrito correctamente');
             })
             .catch(error => {
                 console.error('Error:', error);
-                // Show error notification modal
-                const notificationModal = new bootstrap.Modal(document.getElementById('notificationModal'));
-                document.getElementById('notificationModalBody').textContent = 'Error al agregar el producto al carrito';
-                notificationModal.show();
-                
-                // Add event listener for modal hidden event
-                document.getElementById('notificationModal').addEventListener('hidden.bs.modal', function () {
-                    // Remove modal backdrop if it exists
-                    const backdrop = document.querySelector('.modal-backdrop');
-                    if (backdrop) {
-                        backdrop.remove();
-                    }
-                    // Remove modal-open class from body
-                    document.body.classList.remove('modal-open');
-                    // Remove inline styles from body
-                    document.body.style.removeProperty('padding-right');
-                    document.body.style.removeProperty('overflow');
-                }, { once: true });
+                showNotification('Error al agregar el producto al carrito', true);
             });
         });
     });
 });
 </script>
 {% endblock %}
-{% endblock %}
+{% endblock %} 

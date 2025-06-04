@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block content %}
 <div class="container py-5">
@@ -30,7 +31,7 @@
                             </p>
                             {% with price=product.prices.first %}
                                 {% if price %}
-                                    <p class="card-text fw-bold">${{ price.value|floatformat:0 }}</p>
+                                    <p class="card-text fw-bold">${{ price.value|clp }}</p>
                                 {% else %}
                                     <p class="card-text text-muted">Precio no disponible</p>
                                 {% endif %}

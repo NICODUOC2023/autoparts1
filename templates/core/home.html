@@ -1,122 +1,243 @@
 {% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
 
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
-<!-- Service 10 - Bootstrap Brain Component -->
-
-
-<section class="bg-light py-3 py-md-5 py-xl-8">
+<!-- Hero Section -->
+<div class="bg-primary text-white py-5 mb-5">
     <div class="container">
-      <div class="row justify-content-md-center">
-        <div class="col-12 col-md-10 col-lg-8 col-xl-7 col-xxl-6">
-          <h2 class="mb-4 display-5 text-center">Servicio de Excelencia</h2>
-          <p class="text-secondary mb-5 text-center lead fs-4">AutoParts es una empresa que se dedica a la venta de repuestos para vehículos, ofreciendo los mejores precios y garantías.</p>
-          <hr class="w-50 mx-auto mb-5 mb-xl-9 border-dark-subtle">
-        </div>
-      </div>
-    </div>
-  
-    <div class="container">
-      <div class="row">
-        <div class="col-12">
-          <div class="container-fluid">
-            <div class="row gy-3 gy-md-4">
-              <div class="col-12 col-lg-4">
-                <div class="card border-dark">
-                  <div class="card-body p-3 p-md-4 p-xxl-5 d-flex justify-content-center align-items-center">
-                    <div class="me-3 text-primary">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="bi bi-basket2-fill" viewBox="0 0 16 16">
-                        <path d="M5.929 1.757a.5.5 0 1 0-.858-.514L2.217 6H.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h.623l1.844 6.456A.75.75 0 0 0 3.69 15h8.622a.75.75 0 0 0 .722-.544L14.877 8h.623a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1.717L10.93 1.243a.5.5 0 1 0-.858.514L12.617 6H3.383zM4 10a1 1 0 0 1 2 0v2a1 1 0 1 1-2 0zm3 0a1 1 0 0 1 2 0v2a1 1 0 1 1-2 0zm4-1a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0v-2a1 1 0 0 1 1-1" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h4 class="mb-1">Envío Gratos</h4>
-                      <p class="m-0 text-secondary">Por pedidos superiores a $30.000 </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="col-12 col-lg-4">
-                <div class="card border-dark">
-                  <div class="card-body p-3 p-md-4 p-xxl-5 d-flex justify-content-center align-items-center">
-                    <div class="me-3 text-primary">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="bi bi-chat-left-heart-fill" viewBox="0 0 16 16">
-                        <path d="M2 0a2 2 0 0 0-2 2v12.793a.5.5 0 0 0 .854.353l2.853-2.853A1 1 0 0 1 4.414 12H14a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zm6 3.993c1.664-1.711 5.825 1.283 0 5.132-5.825-3.85-1.664-6.843 0-5.132" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h4 class="mb-1">Soporte 24/7</h4>
-                      <p class="m-0 text-secondary">Asistencia todo el día llamando al 317 844 39 31</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="col-12 col-lg-4">
-                <div class="card border-dark">
-                  <div class="card-body p-3 p-md-4 p-xxl-5 d-flex justify-content-center align-items-center">
-                    <div class="me-3 text-primary">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="bi bi-folder-symlink-fill" viewBox="0 0 16 16">
-                        <path d="M13.81 3H9.828a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 6.172 1H2.5a2 2 0 0 0-2 2l.04.87a2 2 0 0 0-.342 1.311l.637 7A2 2 0 0 0 2.826 14h10.348a2 2 0 0 0 1.991-1.819l.637-7A2 2 0 0 0 13.81 3M2.19 3q-.362.002-.683.12L1.5 2.98a1 1 0 0 1 1-.98h3.672a1 1 0 0 1 .707.293L7.586 3zm9.608 5.271-3.182 1.97c-.27.166-.616-.036-.616-.372V9.1s-2.571-.3-4 2.4c.571-4.8 3.143-4.8 4-4.8v-.769c0-.336.346-.538.616-.371l3.182 1.969c.27.166.27.576 0 .742" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h4 class="mb-1">Garantía de 30 días	</h4>
-                      <p class="m-0 text-secondary">Si no estás satisfecho, puedes devolver el producto en 30 días</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h1 class="display-4 fw-bold mb-4">Encuentra los mejores repuestos para tu vehículo</h1>
+                <p class="lead mb-4">Amplio catálogo de autopartes de las mejores marcas con garantía y soporte técnico.</p>
+                <a href="{% url 'product_list' %}" class="btn btn-light btn-lg">Ver Catálogo</a>
             </div>
-          </div>
+            <div class="col-md-6 text-center">
+                <img src="{% static 'img/hero-car.png' %}" alt="Auto" class="img-fluid" onerror="this.style.display='none'">
+            </div>
         </div>
-      </div>
     </div>
-  </section>
+</div>
 
+<!-- Cyber 2025 Section -->
+<section class="container mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h3 mb-0">
+            <i class="bi bi-lightning-charge-fill text-warning"></i>
+            Ofertas Cyber 2025
+        </h2>
+        <a href="{% url 'product_list' %}" class="btn btn-outline-primary">Ver todo</a>
+    </div>
+    
+    <div class="row row-cols-1 row-cols-md-4 g-4">
+        {% for product in cyber_products %}
+        <div class="col">
+            <div class="card h-100 border-0 shadow-sm">
+                {% if product.image %}
+                <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}" style="height: 200px; object-fit: contain;">
+                {% else %}
+                <div class="bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                    <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
+                </div>
+                {% endif %}
+                <div class="card-body">
+                    <p class="card-text">
+                        <small class="text-muted">{{ product.code }}</small>
+                    </p>
+                    <h5 class="card-title h6">
+                        <a href="{% url 'product_detail' product.id %}" class="text-decoration-none text-dark">{{ product.name }}</a>
+                    </h5>
+                    <p class="card-subtitle mb-2">
+                        <span class="badge bg-primary">{{ product.brand }}</span>
+                    </p>
+                    {% with latest_price=product.get_latest_price %}
+                    {% if latest_price %}
+                    <div class="mb-3">
+                        <p class="text-muted mb-1"><small>Precio Neto: ${{ latest_price.value|clp }}</small></p>
+                        <p class="text-muted mb-1"><small>IVA: ${{ latest_price.iva|clp }}</small></p>
+                        <h4 class="text-primary mb-1">${{ latest_price.total|clp }}</h4>
+                    </div>
+                    <form method="post" action="{% url 'add_to_cart' product.id %}" class="add-to-cart-form">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            <input type="number" name="quantity" value="1" min="1" class="form-control" required>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-cart-plus"></i>
+                            </button>
+                        </div>
+                    </form>
+                    {% else %}
+                    <p class="card-text text-muted">Precio no disponible</p>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
 
-<style>
-    .home-container {
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 2rem;
-    }
+<!-- Recién Llegados Section -->
+<section class="container mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h3 mb-0">
+            <i class="bi bi-box-seam text-success"></i>
+            Recién Llegados
+        </h2>
+        <a href="{% url 'product_list' %}" class="btn btn-outline-primary">Ver todo</a>
+    </div>
+    
+    <div class="row row-cols-1 row-cols-md-4 g-4">
+        {% for product in new_products %}
+        <div class="col">
+            <div class="card h-100 border-0 shadow-sm">
+                {% if product.image %}
+                <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}" style="height: 200px; object-fit: contain;">
+                {% else %}
+                <div class="bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                    <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
+                </div>
+                {% endif %}
+                <div class="card-body">
+                    <p class="card-text">
+                        <small class="text-muted">{{ product.code }}</small>
+                    </p>
+                    <h5 class="card-title h6">
+                        <a href="{% url 'product_detail' product.id %}" class="text-decoration-none text-dark">{{ product.name }}</a>
+                    </h5>
+                    <p class="card-subtitle mb-2">
+                        <span class="badge bg-primary">{{ product.brand }}</span>
+                    </p>
+                    {% with latest_price=product.get_latest_price %}
+                    {% if latest_price %}
+                    <div class="mb-3">
+                        <p class="text-muted mb-1"><small>Precio Neto: ${{ latest_price.value|clp }}</small></p>
+                        <p class="text-muted mb-1"><small>IVA: ${{ latest_price.iva|clp }}</small></p>
+                        <h4 class="text-primary mb-1">${{ latest_price.total|clp }}</h4>
+                    </div>
+                    <form method="post" action="{% url 'add_to_cart' product.id %}" class="add-to-cart-form">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            <input type="number" name="quantity" value="1" min="1" class="form-control" required>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-cart-plus"></i>
+                            </button>
+                        </div>
+                    </form>
+                    {% else %}
+                    <p class="card-text text-muted">Precio no disponible</p>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
 
-    .home-container h1 {
-        color: #2c3e50;
-        margin-bottom: 1.5rem;
-    }
+<!-- Categories Section -->
+<section class="container mb-5">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="h3 mb-4">Categorías Principales</h2>
+        </div>
+        <div class="col-md-3 mb-4">
+            <a href="{% url 'category_products' 'motores-y-componentes' %}" class="text-decoration-none">
+                <div class="card border-0 shadow-sm text-center h-100">
+                    <div class="card-body">
+                        <i class="bi bi-gear-fill display-4 text-primary mb-3"></i>
+                        <h3 class="h5">Motores y Componentes</h3>
+                        <p class="text-muted small">Filtros, bujías y más</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3 mb-4">
+            <a href="{% url 'category_products' 'frenos-y-suspension' %}" class="text-decoration-none">
+                <div class="card border-0 shadow-sm text-center h-100">
+                    <div class="card-body">
+                        <i class="bi bi-disc-fill display-4 text-primary mb-3"></i>
+                        <h3 class="h5">Frenos y Suspensión</h3>
+                        <p class="text-muted small">Pastillas, discos y amortiguadores</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3 mb-4">
+            <a href="{% url 'category_products' 'electricidad-y-baterias' %}" class="text-decoration-none">
+                <div class="card border-0 shadow-sm text-center h-100">
+                    <div class="card-body">
+                        <i class="bi bi-lightning-fill display-4 text-primary mb-3"></i>
+                        <h3 class="h5">Electricidad y Baterías</h3>
+                        <p class="text-muted small">Alternadores, baterías y luces</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3 mb-4">
+            <a href="{% url 'category_products' 'accesorios-y-seguridad' %}" class="text-decoration-none">
+                <div class="card border-0 shadow-sm text-center h-100">
+                    <div class="card-body">
+                        <i class="bi bi-shield-fill-check display-4 text-primary mb-3"></i>
+                        <h3 class="h5">Accesorios y Seguridad</h3>
+                        <p class="text-muted small">Alarmas y equipamiento</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+</section>
 
-    .features {
-        margin-top: 3rem;
-        background-color: white;
-        padding: 2rem;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const forms = document.querySelectorAll('.add-to-cart-form');
+    forms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Update cart count in navbar
+                const cartCount = document.getElementById('cart-count');
+                if (cartCount) {
+                    cartCount.textContent = data.cart_total;
+                }
+                // Show success toast
+                const toast = new bootstrap.Toast(document.getElementById('cartToast'));
+                toast.show();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al agregar el producto al carrito');
+            });
+        });
+    });
+});
+</script>
+{% endblock %}
 
-    .features h2 {
-        color: #2c3e50;
-        margin-bottom: 1rem;
-    }
-
-    .features ul {
-        list-style: none;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
-    }
-
-    .features li {
-        padding: 1rem;
-        background-color: #f8f9fa;
-        border-radius: 4px;
-        text-align: center;
-        transition: transform 0.3s ease;
-    }
-
-    .features li:hover {
-        transform: translateY(-5px);
-    }
-</style>
+<!-- Toast Notification -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="cartToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-success text-white">
+            <i class="bi bi-check-circle me-2"></i>
+            <strong class="me-auto">¡Éxito!</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+            Producto agregado al carrito correctamente.
+        </div>
+    </div>
+</div>
 {% endblock %} 

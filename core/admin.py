@@ -28,10 +28,18 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(Price)
 class PriceAdmin(admin.ModelAdmin):
-    list_display = ('product', 'get_formatted_value', 'date')
-    list_filter = ('date', 'product__brand')
+    list_display = ('product', 'get_formatted_neto', 'get_formatted_iva', 'get_formatted_total', 'created_at')
+    list_filter = ('created_at', 'product__brand')
     search_fields = ('product__name', 'product__brand')
 
-    def get_formatted_value(self, obj):
+    def get_formatted_neto(self, obj):
         return f"${obj.value:,}"
-    get_formatted_value.short_description = "Valor"
+    get_formatted_neto.short_description = "Valor Neto"
+
+    def get_formatted_iva(self, obj):
+        return f"${obj.iva:,}"
+    get_formatted_iva.short_description = "IVA"
+
+    def get_formatted_total(self, obj):
+        return f"${obj.total:,}"
+    get_formatted_total.short_description = "Total"

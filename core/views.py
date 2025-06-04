@@ -1,26 +1,46 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse, HttpResponse
 from rest_framework import viewsets
-from .models import Product, Category
+from .models import Product, Category, Pedido, DetallePedido
 from .serializers import ProductSerializer
 from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET
 from django.contrib import messages
 from django.urls import reverse
 import json
 from decimal import Decimal, InvalidOperation
 from django.db.models import Q
+import requests
+
+
+
+from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseNotAllowed
+from .chilexpress_client import ChilexpressClient
 
 import uuid
 from django.shortcuts import redirect
 from .transbank_client import webpay
 from django.shortcuts import render
 from .pdf_utils import generate_payment_receipt
+from django.conf import settings
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from .regions import get_regions, get_comunas
+from .chilexpress_client import ChilexpressClient
 
 # Create your views here.
 
 def home(request):
+    # Get 4 newest products (Cyber 2025)
+    cyber_products = Product.objects.all().prefetch_related('prices').order_by('-created_at')[:4]
+    
+    # Get 4 oldest products (Recién Llegados)
+    new_products = Product.objects.all().prefetch_related('prices').order_by('created_at')[:4]
+    
     return render(request, 'core/home.html', {
-        'title': 'Welcome to Django Web App'
+        'title': 'Autopartes - Tu tienda de repuestos',
+        'cyber_products': cyber_products,
+        'new_products': new_products
     })
 
 def product_list(request):
@@ -28,6 +48,20 @@ def product_list(request):
     return render(request, 'core/products.html', {
         'products': products,
         'title': 'Todos los Productos'
+    })
+
+def product_detail(request, product_id):
+    product = get_object_or_404(Product.objects.prefetch_related('prices'), id=product_id)
+    latest_price = product.get_latest_price()
+    
+    # Get related products from the same category
+    related_products = Product.objects.filter(category=product.category).exclude(id=product.id)[:4]
+    
+    return render(request, 'core/product_detail.html', {
+        'product': product,
+        'latest_price': latest_price,
+        'related_products': related_products,
+        'title': product.name
     })
 
 def category_products(request, category_slug):
@@ -44,28 +78,28 @@ def category_products(request, category_slug):
 
 @require_POST
 def add_to_cart(request, product_id):
-    product = get_object_or_404(Product, id=product_id)
-    cart = request.session.get('cart', {})
+    if request.method == 'POST':
+        cart = request.session.get('cart', {})
+        product = get_object_or_404(Product, id=product_id)
+        
+        # Convertir el ID a string ya que JSON solo acepta strings como keys
+        product_id = str(product_id)
+        
+        # Verificar stock
+        if product.stock > 0:
+            if product_id in cart:
+                cart[product_id] += 1
+            else:
+                cart[product_id] = 1
+            
+            request.session['cart'] = cart
+            messages.success(request, 'Producto agregado al carrito.')
+            return JsonResponse({'status': 'success'})
+        else:
+            messages.error(request, 'Producto sin stock disponible.')
+            return JsonResponse({'status': 'error', 'message': 'Sin stock'})
     
-    # Convert the product_id to string since session serializes it that way
-    product_id = str(product_id)
-    quantity = int(request.POST.get('quantity', 1))
-    
-    # Get current quantity or 0 if product not in cart
-    current_quantity = cart.get(product_id, 0)
-    # Update quantity
-    cart[product_id] = current_quantity + quantity
-    
-    # Save cart back to session
-    request.session['cart'] = cart
-    
-    # Calculate total items in cart
-    cart_total = sum(cart.values())
-    
-    return JsonResponse({
-        'status': 'success',
-        'cart_total': cart_total
-    })
+    return JsonResponse({'status': 'error', 'message': 'Método no permitido'})
 
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
@@ -112,89 +146,181 @@ def b2b_logout(request):
         del request.session['b2b_user']
     return redirect('b2b_login')
 
-def cart_view(request):
-    cart = request.session.get('cart', {})
-    cart_items = []
-    cart_total = 0
-    total_items = 0
-    
-    for product_id, quantity in cart.items():
-        try:
-            product = Product.objects.get(id=product_id)
-            # Obtener el precio más reciente del producto
-            price = product.prices.first()
-            if price:
-                total_price = price.value * quantity
-                cart_items.append({
-                    'product': product,
-                    'quantity': quantity,
-                    'total_price': total_price
-                })
-                cart_total += total_price
-                total_items += quantity
-        except Product.DoesNotExist:
-            continue
-    
-    return render(request, 'core/cart.html', {
-        'cart_items': cart_items,
-        'cart_total': cart_total,
-        'total_items': total_items
-    })
-
 @require_POST
 def update_cart(request, product_id):
-    try:
-        data = json.loads(request.body)
-        quantity = int(data.get('quantity', 1))
-        
-        if quantity < 1:
-            return JsonResponse({'success': False, 'error': 'La cantidad debe ser mayor a 0'})
-        
+    if request.method == 'POST':
         cart = request.session.get('cart', {})
-        cart[str(product_id)] = quantity
-        request.session['cart'] = cart
+        product_id = str(product_id)
+        quantity = int(request.POST.get('quantity', 1))
         
-        return JsonResponse({'success': True})
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)})
+        if quantity > 0:
+            cart[product_id] = quantity
+        else:
+            cart.pop(product_id, None)
+        
+        request.session['cart'] = cart
+        return JsonResponse({'status': 'success'})
+    
+    return JsonResponse({'status': 'error', 'message': 'Método no permitido'})
 
 @require_POST
 def remove_from_cart(request, product_id):
-    cart = request.session.get('cart', {})
-    if str(product_id) in cart:
-        del cart[str(product_id)]
-        request.session['cart'] = cart
-    return JsonResponse({'success': True})
+    if request.method == 'POST':
+        cart = request.session.get('cart', {})
+        product_id = str(product_id)
+        
+        if product_id in cart:
+            del cart[product_id]
+            request.session['cart'] = cart
+            return JsonResponse({'status': 'success'})
+    
+    return JsonResponse({'status': 'error', 'message': 'Producto no encontrado'})
 
 @require_POST
 def process_payment(request):
-    # Aquí iría la lógica de procesamiento de pago
-    # Por ahora solo limpiaremos el carrito
-    request.session['cart'] = {}
-    messages.success(request, '¡Gracias por tu compra!')
-    return redirect('home')
-
-@require_POST
-def start_payment(request):
-    raw_amount = request.POST.get('amount')
+    # Get form data
+    nombre = request.POST.get('nombre')
+    apellido = request.POST.get('apellido')
+    correo = request.POST.get('correo')
+    direccion = request.POST.get('direccion')
+    comuna = request.POST.get('comuna')
+    shipping_cost = Decimal(request.POST.get('shipping_cost', '0'))
+    
+    # Get cart data
+    cart = request.session.get('cart', {})
+    if not cart:
+        messages.error(request, 'El carrito está vacío')
+        return redirect('cart')
+    
+    # Calculate total
+    cart_total = Decimal('0')
+    cart_items = []
+    
     try:
-        # Quitamos posible formato: comas, símbolos de moneda…
-        normalized = raw_amount.replace(',', '').replace('$', '')
-        amount = Decimal(normalized)
-    except (TypeError, InvalidOperation):
-        return render(request, 'payment/error.html', {
-            'message': 'Monto inválido para iniciar el pago.'
+        for product_id, quantity in cart.items():
+            product = Product.objects.get(id=product_id)
+            latest_price = product.get_latest_price()
+            if not latest_price:
+                messages.error(request, f'Error: Precio no disponible para {product.name}')
+                return redirect('cart')
+            
+            item_total = latest_price.total * Decimal(str(quantity))
+            cart_total += item_total
+            cart_items.append({
+                'product': product,
+                'quantity': quantity,
+                'price': latest_price,
+                'total': item_total
+            })
+        
+        # Add shipping cost
+        cart_total += shipping_cost
+        
+        # Create Pedido
+        buy_order = str(uuid.uuid4())[:20]  # Transbank requires max 26 chars
+        session_id = str(uuid.uuid4())
+        return_url = request.build_absolute_uri(reverse('payment_return'))
+        
+        # Create order in database
+        pedido = Pedido.objects.create(
+            numero_pedido=buy_order,
+            nombre=nombre,
+            apellido=apellido,
+            correo=correo,
+            direccion=direccion,
+            comuna=comuna,
+            subtotal=cart_total - shipping_cost,
+            iva=Decimal('0.19') * (cart_total - shipping_cost),
+            costo_envio=shipping_cost,
+            valor_total=cart_total,
+            estado='pendiente',
+            metodo_pago='webpay'
+        )
+        
+        # Create order details
+        for item in cart_items:
+            DetallePedido.objects.create(
+                pedido=pedido,
+                producto=item['product'],
+                cantidad=item['quantity'],
+                precio_unitario=item['price'].value,
+                subtotal=item['price'].value * item['quantity'],
+                iva=item['price'].iva * item['quantity'],
+                total=item['price'].total * item['quantity']
+            )
+        
+        # Initialize Transbank payment
+        response = webpay.create(
+            buy_order=buy_order,
+            session_id=session_id,
+            amount=int(cart_total),  # Transbank requires integer
+            return_url=return_url
+        )
+        
+        # Store order info in session for later
+        request.session['payment_info'] = {
+            'buy_order': buy_order,
+            'cart_items': [{
+                'product_id': item['product'].id,
+                'quantity': item['quantity'],
+                'price': float(item['price'].total),
+                'total': float(item['total'])
+            } for item in cart_items],
+            'shipping_cost': float(shipping_cost),
+            'total': float(cart_total)
+        }
+        
+        # Clear cart
+        request.session['cart'] = {}
+        
+        # Redirect to Transbank
+        return redirect(response.url + '?token_ws=' + response.token)
+        
+    except Product.DoesNotExist:
+        messages.error(request, 'Uno o más productos no existen')
+        return redirect('cart')
+    except InvalidOperation as e:
+        messages.error(request, f'Error en el cálculo: {str(e)}')
+        return redirect('cart')
+    except Exception as e:
+        messages.error(request, f'Error al procesar el pago: {str(e)}')
+        return redirect('cart')
+
+@require_GET
+def start_payment(request):
+    # Get pending order from session
+    pending_order = request.session.get('pending_order')
+    if not pending_order:
+        messages.error(request, 'No hay un pedido pendiente de pago')
+        return redirect('cart')
+    
+    try:
+        amount = Decimal(pending_order['amount'])  # Convertir de string a Decimal
+        order_id = pending_order['order_id']
+        
+        # Generate unique identifiers
+        buy_order = f"OC{order_id:06d}"  # Format: OC000123
+        session_id = str(uuid.uuid4())
+        return_url = request.build_absolute_uri('/payment/return/')
+
+        # Create Webpay transaction
+        resp = webpay.create(buy_order, session_id, float(amount), return_url)  # Webpay requiere float
+        
+        # Store transaction data in session
+        request.session['transaction_data'] = {
+            'order_id': order_id,
+            'buy_order': buy_order,
+            'amount': str(amount)  # Guardar como string en la sesión
+        }
+        
+        return render(request, 'payment/init_transaction.html', {
+            'action_url': resp['url'],
+            'token': resp['token']
         })
-
-    buy_order  = uuid.uuid4().hex[:26]
-    session_id = uuid.uuid4().hex[:61]
-    return_url = request.build_absolute_uri('/payment/return/')
-
-    resp = webpay.create(buy_order, session_id, float(amount), return_url)
-    return render(request, 'payment/init_transaction.html', {
-        'action_url': resp['url'],
-        'token':      resp['token']
-    })
+        
+    except Exception as e:
+        messages.error(request, f'Error al iniciar el pago: {str(e)}')
+        return redirect('cart')
 
 def download_receipt(request, buy_order):
     # Get the payment data from the session
@@ -263,3 +389,197 @@ def search_products(request):
         'query': query,
         'title': f'Resultados de búsqueda: {query}'
     })
+
+def format_clp(value):
+    """Formatea un número como moneda CLP"""
+    try:
+        value = str(int(float(value)))
+        if len(value) <= 3:
+            return value
+        else:
+            s = value[-3:]
+            value = value[:-3]
+            while value:
+                s = value[-3:] + '.' + s if value[-3:] else value + '.' + s
+                value = value[:-3]
+            return s
+    except (ValueError, TypeError):
+        return value
+
+def products(request):
+    products = Product.objects.all().prefetch_related('prices')
+    categories = Category.objects.all()
+    
+    # Filtrar por categoría si se especifica
+    category_id = request.GET.get('category')
+    if category_id:
+        products = products.filter(category_id=category_id)
+    
+    context = {
+        'products': products,
+        'categories': categories
+    }
+    return render(request, 'core/products.html', context)
+
+def cart(request):
+    cart = request.session.get('cart', {})
+    cart_items = []
+    cart_subtotal = Decimal('0')
+    shipping_cost = Decimal('0')
+    
+    for product_id, quantity in cart.items():
+        product = get_object_or_404(Product, id=product_id)
+        price = product.get_latest_price()
+        if price:
+            quantity = Decimal(str(quantity))  # Convertir quantity a Decimal
+            subtotal = price.value * quantity
+            cart_items.append({
+                'product': product,
+                'quantity': quantity,
+                'unit_price': price.value,
+                'subtotal': subtotal
+            })
+            cart_subtotal += subtotal
+    
+    # Calcular IVA y total
+    cart_iva = cart_subtotal * Decimal('0.19')
+    
+    # Calcular costo de envío si hay items
+    if cart_items:
+        shipping_cost = Decimal('11487')  # Costo fijo de envío
+    
+    cart_total = cart_subtotal + cart_iva + shipping_cost
+    
+    context = {
+        'cart_items': cart_items,
+        'cart_subtotal': cart_subtotal,
+        'cart_iva': cart_iva,
+        'shipping_cost': shipping_cost,
+        'cart_total': cart_total
+    }
+    
+    return render(request, 'core/cart.html', context)
+
+def checkout(request):
+    cart = request.session.get('cart', {})
+    if not cart:
+        messages.error(request, 'Tu carrito está vacío')
+        return redirect('cart')
+    
+    cart_items = []
+    cart_subtotal = Decimal('0')
+    
+    for product_id, quantity in cart.items():
+        product = get_object_or_404(Product, id=product_id)
+        price = product.get_latest_price()
+        if price:
+            subtotal = price.value * quantity
+            cart_items.append({
+                'product': product,
+                'quantity': quantity,
+                'unit_price': price.value,
+                'subtotal': subtotal
+            })
+            cart_subtotal += subtotal
+    
+    cart_iva = cart_subtotal * Decimal('0.19')
+    shipping_cost = Decimal('11487') if cart_items else Decimal('0')
+    cart_total = cart_subtotal + cart_iva + shipping_cost
+    
+    context = {
+        'cart_items': cart_items,
+        'cart_subtotal': cart_subtotal,
+        'cart_iva': cart_iva,
+        'shipping_cost': shipping_cost,
+        'cart_total': cart_total
+    }
+    
+    return render(request, 'core/checkout.html', context)
+
+@require_GET
+def get_comunas_view(request, region_code):
+    """
+    Vista que atiende GET /api/comunas/<region_code>/
+    Devuelve en JSON la lista de comunas definidas en regions.py para esa región.
+    """
+    try:
+        comunas = get_comunas(region_code)
+        return JsonResponse(comunas, safe=False, status=200)
+    except Exception as e:
+        return JsonResponse(
+            {"error": f"Error inesperado al obtener comunas: {str(e)}"},
+            status=500
+        )
+API_KEY = "06244c53b5864b05877581700ea03308"
+
+@require_POST
+def calculate_shipping(request):
+    try:
+        data = json.loads(request.body)
+        destination_code = data.get('destination_code')
+        
+        if not destination_code:
+            return JsonResponse({'error': 'Código de destino es requerido'}, status=400)
+
+        # Fixed weight of 5kg
+        package_weight = 5
+            
+        # Get cart total for declared worth
+        cart = request.session.get('cart', {})
+        cart_total = 0
+        for product_id, quantity in cart.items():
+            product = Product.objects.get(id=product_id)
+            price = product.get_latest_price()
+            if price:
+                cart_total += price.total * quantity
+
+        # Initialize Chilexpress client and calculate shipping
+        client = ChilexpressClient(api_key=API_KEY)
+        try:
+            result = client.calculate_shipping(
+                origin_county_code=ORIGIN_COMUNA,
+                destination_county_code=destination_code,
+                package_weight=package_weight,
+                declared_worth=cart_total
+            )
+            
+            # Add more details to the response
+            return JsonResponse({
+                'success': True,
+                'cost': result['cost'],
+                'service_type': result['service_type'],
+                'service_description': result.get('service_description', ''),
+                'delivery_time': result.get('delivery_time', '')
+            })
+            
+        except ValueError as e:
+            return JsonResponse({
+                'error': f'Error al calcular el envío: {str(e)}',
+                'details': 'Por favor, verifica que la comuna seleccionada sea válida.'
+            }, status=400)
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'JSON inválido en la solicitud.'}, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'error': f'Error inesperado: {str(e)}',
+            'details': 'Por favor, intenta nuevamente más tarde.'
+        }, status=500)
+
+# Add these constants at the top of the file
+COMUNAS = [
+    {"code": "STGO", "name": "Santiago"},
+    {"code": "PROV", "name": "Providencia"},
+    {"code": "LCON", "name": "Las Condes"},
+    {"code": "NUNO", "name": "Ñuñoa"},
+    {"code": "VALP", "name": "Valparaíso"},
+    {"code": "VINA", "name": "Viña del Mar"},
+    {"code": "CONC", "name": "Concepción"},
+]
+
+ORIGIN_COMUNA = "STGO"  # Santiago como origen por defecto
+
+@require_GET
+def get_comunas(request):
+    """Return list of available communes"""
+    return JsonResponse(COMUNAS, safe=False)
