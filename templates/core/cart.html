@@ -1,0 +1,32 @@
+function updateCartItem(productId, quantity) {
+    fetch(`/cart/update/${productId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({ quantity: parseInt(quantity) })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Update cart count in navbar
+            const cartCount = document.getElementById('cart-count');
+            const cartBadge = document.querySelector('.cart-badge');
+            if (cartCount) {
+                cartCount.textContent = data.cart_total;
+            }
+            if (cartBadge) {
+                cartBadge.textContent = data.cart_total;
+            }
+            // Reload the page to update prices
+            location.reload();
+        } else {
+            showNotification('Error al actualizar el carrito: ' + (data.message || 'Error desconocido'), true);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error al actualizar el carrito', true);
+    });
+} 

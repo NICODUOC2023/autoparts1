@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+{% load custom_filters %}
+
+{% block content %}
+<!-- ... existing content ... -->
+{% endblock %}
+
+<!-- Notification Modal -->
+<div class="modal fade" id="notificationModal" tabindex="-1" aria-labelledby="notificationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="notificationModalLabel">Notificación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="notificationModalBody">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const forms = document.querySelectorAll('.add-to-cart-form');
+    forms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Update all cart counters
+                    const cartCount = document.getElementById('cart-count');
+                    const cartBadge = document.querySelector('.cart-badge');
+                    if (cartCount) {
+                        cartCount.textContent = data.cart_total;
+                    }
+                    if (cartBadge) {
+                        cartBadge.textContent = data.cart_total;
+                    }
+                    // Show success notification
+                    showNotification('Producto agregado al carrito correctamente');
+                } else {
+                    showNotification(data.message || 'Error al agregar al carrito', true);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Error al agregar el producto al carrito', true);
+            });
+        });
+    });
+});
+
+function showNotification(message, isError = false) {
+    const notificationModal = new bootstrap.Modal(document.getElementById('notificationModal'));
+    document.getElementById('notificationModalBody').textContent = message;
+    notificationModal.show();
+}
+</script>
+{% endblock %} 
