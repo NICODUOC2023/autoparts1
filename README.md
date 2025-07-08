@@ -1,37 +1,33 @@
-# Django Web Application
+# AUTOPARTS 
+Construída con Django backend y HTML/CSS/JavaScript frontend.
 
-This is a web application built with Django backend and HTML/CSS/JavaScript frontend.
+## Como ejecutar:
 
-## Setup Instructions
-
-1. Create a virtual environment:
+1. Crea entorno virtual:
 ```bash
 python -m venv venv
 ```
 
-2. Activate the virtual environment:
-- Windows:
+2. Activa el entorno virtual:
+
 ```bash
 .\venv\Scripts\activate
 ```
-- Unix/MacOS:
-```bash
-source venv/bin/activate
-```
 
-3. Install dependencies:
+
+3. Instalar dependencias:
 ```bash
 pip install -r requirements.txt
 ```
 
-4. Run migrations:
+4. MIGRATE
 ```bash
 python manage.py migrate
 ```
 
-5. Start the development server:
+5. Correr el servidor:
 ```bash
 python manage.py runserver
 ```
 
-The application will be available at http://127.0.0.1:8000/ 
+Debería estar corriendo en http://127.0.0.1:8000/ 
